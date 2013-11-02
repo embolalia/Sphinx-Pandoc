@@ -16,9 +16,15 @@ def setup(app):
     app.connect('autodoc-process-docstring', pandoc_process)
 
 def pandoc_process(app, what, name, obj, options, lines):
+    if not lines:
+        return
     input_format = app.config.pandoc_use_parser
-    for i in xrange(len(lines)):
-        print lines[i]
-        line = lines[i].encode('utf-8')
-        lines[i] = unicode(pypandoc.convert(line, 'rst', format=input_format),
-                           encoding='utf-8')
+    data = '\n'.join(lines)
+    data = data.encode('utf-8')
+    data = unicode(pypandoc.convert(data, 'rst', format=input_format),
+                   encoding='utf-8')
+    # Sphinx expects `lines` to be edited in place, so we have to replace it
+    # like this.
+    new_lines = data.split('\n')
+    del lines[:]
+    lines.extend(new_lines)
